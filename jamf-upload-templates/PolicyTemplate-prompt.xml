@@ -1,0 +1,61 @@
+<policy>
+    <!-- General - Name, Enabled/Disabled, Triggers, Frequency, Categories -->
+    <general>
+        <name>%policy_name%</name>
+        <enabled>true</enabled>
+        <frequency>Once every month</frequency>
+        <trigger>EVENT</trigger>
+        <trigger_checkin>true</trigger_checkin>
+        <trigger_enrollment_complete>false</trigger_enrollment_complete>
+        <trigger_login>false</trigger_login>
+        <trigger_logout>false</trigger_logout>
+        <trigger_network_state_changed>false</trigger_network_state_changed>
+        <trigger_startup>false</trigger_startup>
+        <category>
+            <name>%policy_category%</name>
+        </category>
+    </general>
+    <!-- Scope -->
+    <scope>
+        <all_computers>false</all_computers>
+        <computer_groups>
+            <computer_group>
+                <name>%group_name%</name>
+            </computer_group>
+        </computer_groups>
+        <exclusions/>
+    </scope>
+    <!-- Packages -->
+    <package_configuration/>
+    <!-- Scripts -->
+    <scripts>
+        <size>1</size>
+        <script>
+            <name>Auto-Update: App Quitter</name>
+            <priority>Before</priority>
+            <parameter4>%APP_BUNDLE_ID%</parameter4>
+            <parameter5>true</parameter5>
+            <parameter6>%NAME%</parameter6>
+            <parameter7>%script_trigger_name%</parameter7>
+            <parameter8>false</parameter8>
+            <parameter9>%DEFER_TRIGGER%</parameter9>
+            <parameter10>14</parameter10>
+            <parameter11/>
+        </script>
+    </scripts>
+    <!-- Self Service details -->
+    <self_service>
+        <use_for_self_service>false</use_for_self_service>
+    </self_service>
+    <!-- Maintenance e.g. recon -->
+    <maintenance>
+        <recon>false</recon>
+    </maintenance>
+    <!-- Files and processes e.g. run command -->
+    <files_processes/>
+    <!-- User interaction e.g. start and finish messages -->
+    <user_interaction>
+        <message_start/>
+        <message_finish/>
+    </user_interaction>
+</policy>
