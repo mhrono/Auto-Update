@@ -1,8 +1,18 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+
 """
+Copyright 2022 Buoy Health, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+"""
+
+"""
+Source: https://github.com/t-lark/Auto-Update/
 This script will silently patch any app by bundle ID, but only if the app itself is not running
 you must supply the bundle ID of the app to check and the policy event manual trigger for jamf as
-positional parameters 4 and 5
+positional parameters 3 and 4
 
 author:  tlark
 
@@ -10,59 +20,66 @@ Mac Admin Slack @tlark
 
 """
 
+"""
+Modifications by: Matt Hrono
+MacAdmins: @matt_h
+"""
+
 # import modules
-from Cocoa import NSRunningApplication
 import sys
 import subprocess
 
+from Cocoa import NSRunningApplication
 
-# global vars
-# bundle ID of the app to check
-# you may supply multiple bundle IDs by adding them comma separated as a parameter in jamf pro
-# in the event a developer changes the bundle ID
+"""
+global variables:
+	4 - bundle ID of the app to check
+		you may supply multiple bundle IDs by adding them comma separated as a parameter in jamf pro in the event a developer changes the bundle ID
+	5 - jamf policy event trigger to install the app
+"""
 APPS = sys.argv[4].split(",")
-# update policy to run, supply the custom policy event name, i.e. install_app02
 POLICY = sys.argv[5]
 
-
 # start functions
-
-
 def check_if_running(bid):
-    """Test to see if an app is running by bundle ID"""
-    # macOS API to check if an app bundle is running or not
-    app = NSRunningApplication.runningApplicationsWithBundleIdentifier_(bid)
-    # return True if running, False if not
-    if app:
-        return True
-    if not app:
-        return False
+	"""
+	Use a native macOS API to determine whether or not the app is running using its bundle ID
+	Return a boolean value based on the result
+	"""
+	app = NSRunningApplication.runningApplicationsWithBundleIdentifier_(bid)
+	if app:
+		return True
+	if not app:
+		return False
 
 
 def run_update_policy(event):
-    """run the updater policy for the app"""
-    # unix command list
-    cmd = ["/usr/local/bin/jamf", "policy", "-event", event]
-    # execute the policy to the binary
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # grab stdout and stderr pipes and communicate them to the shell
-    out, err = proc.communicate()
-    # if we get a non zero response, print the error
-    if proc.returncode != 0:
-        print("Error: %s" % err)
+	"""
+	This function accepts event as a trigger for a jamf policy to install an app package, such as 'autoupdate-Slack'
+	The jamf binary is called to explicitly run the policy with the specified event trigger
+	If the event trigger is empty, do nothing
+	"""
+	cmd = ["/usr/local/bin/jamf", "policy", "-event", event]
+	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	out, err = proc.communicate()
+	if proc.returncode != 0:
+		print("Error: %s" % err)
 
 
 def main():
-    """main policy to run the jewels"""
-    # iterate through bundle IDs for the edge case a developer changes a bundle ID
-    for app in APPS:
-        # if the app is running, we will silently exit
-        if check_if_running(app):
-            sys.exit(0)
-    else:
-        run_update_policy(POLICY)
+	"""
+	For each bundle ID, check if it's running or not
+	If running, exit silently
+	Otherwise, call the update policy to update the app
+	"""
+	for app in APPS:
+		if check_if_running(app):
+			sys.exit(0)
+	else:
+		run_update_policy(POLICY)
 
 
 # run the main
 if __name__ == "__main__":
-    main()
+	main()
+	
