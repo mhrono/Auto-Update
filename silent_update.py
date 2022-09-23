@@ -36,9 +36,11 @@ global variables:
 	4 - bundle ID of the app to check
 		you may supply multiple bundle IDs by adding them comma separated as a parameter in jamf pro in the event a developer changes the bundle ID
 	5 - jamf policy event trigger to install the app
+	6 - new version of the app to be installed
 """
 APPS = sys.argv[4].split(",")
 POLICY = sys.argv[5]
+VERSION = sys.argv[6]
 
 # start functions
 def check_if_running(bid):
@@ -65,6 +67,42 @@ def run_update_policy(event):
 	if proc.returncode != 0:
 		print("Error: %s" % err)
 
+def check_version(bid):
+	"""
+	Given the bundle ID for an app, check the currently installed version against the version to be installed
+	If they match (such as if the user already updated), exit silently
+	"""
+
+	cmd = ["/usr/bin/mdfind", "kMDItemCFBundleIdentifier", "=", bid]
+	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	appPath, err = proc.communicate()
+
+	plistPath=appPath.decode("utf-8").strip() + "/Contents/Info.plist"
+
+	cmd = ["/usr/bin/defaults", "read", plistPath, "CFBundleVersion"]
+	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	bundleVersion, err = proc.communicate()
+
+	bundleVersionString=bundleVersion.decode("utf-8").strip()
+
+	cmd = ["/usr/bin/defaults", "read", plistPath, "CFBundleShortVersionString"]
+	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	bundleShortVersion, err = proc.communicate()
+
+	bundleShortVersionString=bundleShortVersion.decode("utf-8").strip()
+
+	if VERSION != bundleVersionString and VERSION != bundleShortVersionString:
+		return True
+	else:
+		return False
+
+def run_recon():
+	"""
+	Update inventory to jamf
+	"""
+	cmd = ["/usr/local/bin/jamf", "recon"]
+	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	out, err = proc.communicate()
 
 def main():
 	"""
@@ -76,7 +114,11 @@ def main():
 		if check_if_running(app):
 			sys.exit(0)
 	else:
-		run_update_policy(POLICY)
+		if check_version(app):
+			run_update_policy(POLICY)
+		else:
+			run_recon()
+			sys.exit(0)
 
 
 # run the main
